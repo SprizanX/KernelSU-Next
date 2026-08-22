@@ -1,0 +1,39 @@
+name: Sync with upstream
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch upstream
+        run: |
+          git remote add upstream https://github.com/KernelSU-Next/KernelSU-Next.git
+          git fetch upstream dev
+
+      - name: Merge upstream/dev
+        run: |
+          if git merge-base --is-ancestor upstream/dev HEAD; then
+            echo "Already up to date"
+            exit 0
+          fi
+          git merge upstream/dev --no-edit
+
+      - name: Push
+        run: git push origin dev
