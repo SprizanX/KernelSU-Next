@@ -18,3 +18,17 @@ val GREEN = Color(0xFF4CAF50)             // Green
 val RED = Color(0xFFF44336)               // Red
 val YELLOW = Color(0xFFFFEB3B)            // Yellow
 val ORANGE = Color(0xFFFF9800)            // Orange
+
+// Accent presets for the manual (non-dynamic) color mode
+val ACCENT_PRESETS: List<Color> = listOf(
+    PRIMARY,                    // Catppuccin Blue
+    Color(0xFFA6DA95),          // Green
+    Color(0xFF94E2D5),          // Teal
+    Color(0xFF89DCEB),          // Sky
+    Color(0xFFCBA6F7),          // Mauve
+    Color(0xFFF5BDE6),          // Pink
+    Color(0xFFEE99A0),          // Red
+    Color(0xFFFAB387),          // Peach
+    Color(0xFFEED49F),          // Yellow
+    Color(0xFFBCC0CC)           // Grey
+)

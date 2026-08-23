@@ -65,6 +65,7 @@ import com.rifsxd.ksunext.Natives
 import com.rifsxd.ksunext.ksuApp
 import com.rifsxd.ksunext.ui.screen.BottomBarDestination
 import com.rifsxd.ksunext.ui.screen.FlashIt
+import com.rifsxd.ksunext.ui.theme.ACCENT_PRESETS
 import com.rifsxd.ksunext.ui.theme.KernelSUTheme
 import com.rifsxd.ksunext.ui.util.*
 import com.rifsxd.ksunext.ui.viewmodel.ModuleViewModel
@@ -196,7 +197,19 @@ class MainActivity : ComponentActivity() {
     var navigateLoc by mutableStateOf<NavigateLocation?>(null)
     var moduleActionId by mutableStateOf<String?>(null)
     var amoledModeState = mutableStateOf(false)
+    var dynamicColorState = mutableStateOf(true)
+    var accentColorIndexState = mutableIntStateOf(-1)
     private val handler = Handler(Looper.getMainLooper())
+
+    fun setDynamicColor(enabled: Boolean) {
+        dynamicColorState.value = enabled
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("enable_dynamic_color", enabled).apply()
+    }
+
+    fun setAccentColorIndex(index: Int) {
+        accentColorIndexState.intValue = index
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("accent_color_index", index).apply()
+    }
 
     val moduleViewModel: ModuleViewModel by viewModels()
     val superUserViewModel: SuperUserViewModel by viewModels()
@@ -226,10 +239,17 @@ class MainActivity : ComponentActivity() {
         try {
             val prefsInit = getSharedPreferences("settings", MODE_PRIVATE)
             amoledModeState.value = prefsInit.getBoolean("enable_amoled", false)
+            dynamicColorState.value = prefsInit.getBoolean("enable_dynamic_color", true)
+            accentColorIndexState.intValue = prefsInit.getInt("accent_color_index", -1)
         } catch (_: Exception) {}
 
         val isManager = Natives.isManager
         if (isManager) install()
+
+        try {
+            com.rifsxd.ksunext.ui.widget.RootStatusWidgetProvider.refresh(this)
+        } catch (_: Exception) {
+        }
 
         if ((intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) {
             intent.extras?.clear()
@@ -240,7 +260,11 @@ class MainActivity : ComponentActivity() {
             handleIntent(intent)
 
         setContent {
-            KernelSUTheme(amoledMode = amoledModeState.value) {
+            KernelSUTheme(
+                dynamicColor = dynamicColorState.value,
+                accentColor = ACCENT_PRESETS.getOrNull(accentColorIndexState.intValue),
+                amoledMode = amoledModeState.value
+            ) {
                 val navController = rememberNavController()
                 val snackBarHostState = remember { SnackbarHostState() }
                 val currentDestination = navController.currentBackStackEntryAsState().value?.destination

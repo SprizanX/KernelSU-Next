@@ -24,6 +24,18 @@ private val LightColorScheme = lightColorScheme(
     tertiary = SECONDARY_LIGHT
 )
 
+private fun darkColorSchemeFor(accent: Color?) = if (accent == null) {
+    DarkColorScheme
+} else {
+    darkColorScheme(primary = accent, secondary = accent, tertiary = accent)
+}
+
+private fun lightColorSchemeFor(accent: Color?) = if (accent == null) {
+    LightColorScheme
+} else {
+    lightColorScheme(primary = accent, secondary = accent, tertiary = accent)
+}
+
 fun Color.blend(other: Color, ratio: Float): Color {
     val inverse = 1f - ratio
     return Color(
@@ -39,6 +51,7 @@ fun KernelSUTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
+    accentColor: Color? = null,
     amoledMode: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -62,7 +75,7 @@ fun KernelSUTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
         amoledMode && darkTheme -> {
-            DarkColorScheme.copy(
+            darkColorSchemeFor(accentColor).copy(
                 background = AMOLED_BLACK,
                 surface = AMOLED_BLACK,
                 surfaceVariant = DARK_GREY.blend(AMOLED_BLACK, 0.8f),
@@ -73,8 +86,8 @@ fun KernelSUTheme(
                 surfaceContainerHighest = DARK_GREY.blend(AMOLED_BLACK, 0.8f),
             )
         }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> darkColorSchemeFor(accentColor)
+        else -> lightColorSchemeFor(accentColor)
     }
 
     SystemBarStyle(

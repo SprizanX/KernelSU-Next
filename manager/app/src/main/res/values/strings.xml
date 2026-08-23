@@ -147,6 +147,11 @@
     <string name="restart_app">Restart</string>
     <string name="settings_amoled_mode">AMOLED mode</string>
     <string name="settings_amoled_mode_summary">Enable a pure black theme useful for AMOLED screens to reduce eye strain and save battery.</string>
+    <string name="settings_dynamic_color">Dynamic color (Material You)</string>
+    <string name="settings_dynamic_color_summary">Follow the system wallpaper colors. Available on Android 12+.</string>
+    <string name="settings_accent_color">Accent color</string>
+    <string name="settings_accent_custom">Custom</string>
+    <string name="widget_kernel_version">Kernel: %1$s</string>
     <string name="restart_required">Restart required</string>
     <string name="restart_app_message">The app needs to restart for this change to take effect.</string>
     <string name="failed_to_update_sepolicy">Failed to update SELinux rules for %s</string>

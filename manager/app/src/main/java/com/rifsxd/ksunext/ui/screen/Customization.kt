@@ -2,20 +2,28 @@ package com.rifsxd.ksunext.ui.screen
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Contrast
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.ViewCarousel
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import com.rifsxd.ksunext.ui.LocalScrollState
@@ -298,6 +306,113 @@ fun CustomizationScreen(navigator: DestinationsNavigator) {
                 ) { checked ->
                     activity?.setAmoledMode(checked)
                     enableAmoled = checked
+                }
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val activity = LocalContext.current as? MainActivity
+                var enableDynamicColor by rememberSaveable {
+                    mutableStateOf(prefs.getBoolean("enable_dynamic_color", true))
+                }
+                SwitchItem(
+                    icon = Icons.Filled.Palette,
+                    title = stringResource(id = R.string.settings_dynamic_color),
+                    summary = stringResource(id = R.string.settings_dynamic_color_summary),
+                    checked = enableDynamicColor
+                ) { checked ->
+                    activity?.setDynamicColor(checked)
+                    enableDynamicColor = checked
+                }
+
+                if (!enableDynamicColor) {
+                    var accentIndex by rememberSaveable {
+                        mutableIntStateOf(prefs.getInt("accent_color_index", -1))
+                    }
+                    val accentDialog = rememberCustomDialog { dismiss ->
+                        AlertDialog(
+                            onDismissRequest = { dismiss() },
+                            confirmButton = {
+                                TextButton(onClick = { dismiss() }) {
+                                    Text(stringResource(android.R.string.ok))
+                                }
+                            },
+                            title = { Text(stringResource(R.string.settings_accent_color)) },
+                            text = {
+                                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .border(
+                                                    width = 2.dp,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                    shape = CircleShape
+                                                )
+                                                .clickable {
+                                                    accentIndex = -1
+                                                    activity?.setAccentColorIndex(-1)
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                stringResource(R.string.system_default).take(1),
+                                                style = MaterialTheme.typography.labelSmall
+                                            )
+                                        }
+                                    }
+                                    ACCENT_PRESETS.chunked(5).forEach { rowColors ->
+                                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                            rowColors.forEachIndexed { colIdxInRow, color ->
+                                                val idx = ACCENT_PRESETS.indexOf(color)
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(36.dp)
+                                                        .clip(CircleShape)
+                                                        .background(color)
+                                                        .border(
+                                                            width = if (accentIndex == idx) 2.dp else 0.dp,
+                                                            color = MaterialTheme.colorScheme.onSurface,
+                                                            shape = CircleShape
+                                                        )
+                                                        .padding(4.dp)
+                                                        .clickable {
+                                                            accentIndex = idx
+                                                            activity?.setAccentColorIndex(idx)
+                                                        }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    }
+                    ListItem(
+                        headlineContent = { Text(stringResource(id = R.string.settings_accent_color)) },
+                        supportingContent = {
+                            val idx = accentIndex
+                            val color = if (idx in ACCENT_PRESETS.indices) ACCENT_PRESETS[idx] else null
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (color == null) {
+                                    Text(stringResource(R.string.system_default))
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(color)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(stringResource(R.string.settings_accent_custom))
+                                }
+                            }
+                        },
+                        modifier = Modifier.clickable { accentDialog.show() }
+                    )
                 }
             }
         }
