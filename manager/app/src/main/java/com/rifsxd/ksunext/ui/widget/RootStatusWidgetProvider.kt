@@ -23,7 +23,7 @@ class RootStatusWidgetProvider : AppWidgetProvider() {
             try {
                 val manager = AppWidgetManager.getInstance(context) ?: return
                 val ids = manager.getAppWidgetIds(ComponentName(context, RootStatusWidgetProvider::class.java))
-                if (ids.isNullOrEmpty()) return
+                if (ids == null || ids.isEmpty()) return
                 refresh(context, manager, ids)
             } catch (_: Exception) {
                 // widget updates must never crash the host process
@@ -32,9 +32,9 @@ class RootStatusWidgetProvider : AppWidgetProvider() {
 
         private fun refresh(context: Context, manager: AppWidgetManager, ids: IntArray) {
             val views = RemoteViews(context.packageName, R.layout.widget_root_status)
-            val statusColor: Int
-            val statusText: String
-            val detailsText: String
+            var statusColor = Color.WHITE
+            var statusText = ""
+            var detailsText = ""
 
             try {
                 val supported = Natives.isManager && Natives.version >= Natives.MINIMAL_SUPPORTED_KERNEL
@@ -52,8 +52,8 @@ class RootStatusWidgetProvider : AppWidgetProvider() {
                     else -> {
                         statusText = context.getString(R.string.home_working)
                         statusColor = Color.parseColor("#FF9FE870")
-                        val tag = Natives.getVersionTag()
-                        detailsText = tag ?: context.getString(R.string.home_working_version, Natives.version.toString(), "")
+                        detailsText = Natives.getVersionTag()
+                            ?: context.getString(R.string.home_working_version, Natives.version.toString(), "")
                     }
                 }
             } catch (_: Throwable) {
