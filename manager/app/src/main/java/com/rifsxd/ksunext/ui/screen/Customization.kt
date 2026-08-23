@@ -116,13 +116,10 @@ fun CustomizationScreen(navigator: DestinationsNavigator) {
 
             // Language setting with selection dialog
             val languageDialog = rememberCustomDialog { dismiss ->
-                // Check if should use system language settings
-                if (LocaleHelper.useSystemLanguageSettings) {
-                    // Android 13+ - Jump to system settings
-                    LocaleHelper.launchSystemLanguageSettings(context)
-                    dismiss()
-                } else {
-                    // Android < 13 - Show app language selector
+                // In-app selector on all Android versions. On 13+ the locale is
+                // applied through LocaleManager; jumping to the system picker is
+                // avoided because some OEM settings apps crash on it (#987).
+                run {
                     // Dynamically detect supported locales from resources
                     val supportedLocales = remember {
                         val locales = mutableListOf<java.util.Locale>()
@@ -143,12 +140,12 @@ fun CustomizationScreen(navigator: DestinationsNavigator) {
                                     dir.contains("-r") -> {
                                         val parts = dir.split("-r")
                                         java.util.Locale.Builder()
-                                            .setLanguage(parts[0])
+                                            .setLanguage(LocaleHelper.normalizeLegacyLanguageCode(parts[0]))
                                             .setRegion(parts[1])
                                             .build()
                                     }
                                     else -> java.util.Locale.Builder()
-                                        .setLanguage(dir)
+                                        .setLanguage(LocaleHelper.normalizeLegacyLanguageCode(dir))
                                         .build()
                                 }
                                 
@@ -214,13 +211,16 @@ fun CustomizationScreen(navigator: DestinationsNavigator) {
                             onFinishedRequest = {
                                 if (selectedIndex >= 0 && selectedIndex < allOptions.size) {
                                     val newLocale = allOptions[selectedIndex].first
-                                    prefs.edit { putString("app_locale", newLocale) }
+                                    LocaleHelper.setPreferredLocale(context, newLocale)
                                     
                                     // Update local state immediately
                                     currentAppLocale = LocaleHelper.getCurrentAppLocale(context)
                                     
-                                    // Apply locale change immediately for Android < 13
-                                    refreshActivity(context)
+                                    // Apply locale change immediately for Android < 13;
+                                    // on Android 13+ LocaleManager recreates automatically
+                                    if (!LocaleHelper.useSystemLanguageSettings) {
+                                        refreshActivity(context)
+                                    }
                                 }
                                 dismiss()
                             },

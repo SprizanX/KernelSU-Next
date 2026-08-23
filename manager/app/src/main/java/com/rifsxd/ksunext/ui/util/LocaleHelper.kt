@@ -3,11 +3,8 @@ package com.rifsxd.ksunext.ui.util
 import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.res.Configuration
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import java.util.*
 
 object LocaleHelper {
@@ -19,17 +16,42 @@ object LocaleHelper {
         get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
     
     /**
-     * Launch system app locale settings (Android 13+)
+     * Map legacy ISO language codes that are ill-formed for Locale.Builder
+     * to their modern BCP 47 equivalents.
      */
-    fun launchSystemLanguageSettings(context: Context) {
+    fun normalizeLegacyLanguageCode(code: String): String {
+        return when (code) {
+            "in" -> "id" // Indonesian
+            "iw" -> "he" // Hebrew
+            "ji" -> "yi" // Yiddish
+            "jw" -> "jv" // Javanese
+            else -> code
+        }
+    }
+
+    /**
+     * Persist the chosen locale.
+     *
+     * Android 13+: applied directly through LocaleManager so the app does not
+     * depend on the OEM's (often broken) system locale picker screen.
+     * Android < 13: stored in prefs and applied via [applyLanguage] on next
+     * activity creation; caller should call refreshActivity() afterwards.
+     */
+    fun setPreferredLocale(context: Context, tag: String) {
+        val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        prefs.edit().putString("app_locale", tag).apply()
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             try {
-                val intent = Intent(Settings.ACTION_APP_LOCALE_SETTINGS).apply {
-                    data = Uri.fromParts("package", context.packageName, null)
+                val localeManager = context.getSystemService(Context.LOCALE_SERVICE) as? android.app.LocaleManager
+                    ?: return
+                if (tag == "system") {
+                    localeManager.applicationLocales = android.os.LocaleList.getEmptyLocaleList()
+                } else {
+                    localeManager.applicationLocales = android.os.LocaleList(parseLocaleTag(tag))
                 }
-                context.startActivity(intent)
             } catch (_: Exception) {
-                // Fallback to app language settings if system settings not available
+                // Some ROMs may lack a working LocaleManager; prefs fallback remains
             }
         }
     }
@@ -93,12 +115,12 @@ object LocaleHelper {
             if (tag.contains("_")) {
                 val parts = tag.split("_")
                 Locale.Builder()
-                    .setLanguage(parts[0])
+                    .setLanguage(normalizeLegacyLanguageCode(parts[0]))
                     .setRegion(parts.getOrNull(1) ?: "")
                     .build()
             } else {
                 Locale.Builder()
-                    .setLanguage(tag)
+                    .setLanguage(normalizeLegacyLanguageCode(tag))
                     .build()
             }
         } catch (_: Exception) {
