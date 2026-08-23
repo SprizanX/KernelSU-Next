@@ -554,7 +554,7 @@ private fun AppSettingsCard(
                     onSave = {
                         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH_mm")
                         val current = LocalDateTime.now().format(formatter)
-                        exportBugreportLauncher.launch("KernelSU_Next_bugreport_${current}.tar.gz")
+                        exportBugreportLauncher.launch("KernelSU_X_bugreport_${current}.tar.gz")
                         showBottomsheet = false
                     },
                     onShare = {
